@@ -2,8 +2,14 @@
 #include "fstream"
 #include "string"
 #include "algorithm"
+#include "set"
 
 using namespace std;
+
+struct Graph{
+    int habilitações;
+    set<int, greater<int>>* adj_list;
+};
 
 int main(){
 
