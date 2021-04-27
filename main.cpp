@@ -33,21 +33,40 @@ struct Grafo{
 
 void ImprimeGrafo(Grafo grafo){
 
+    FILE* fd;
+    char file[] = "visualizacao_saida.txt";
+    fd = fopen(file, "w");
+
     for(auto x: grafo.prof){
+        fprintf(fd, "Código do Professor: %s\n", x.cod_professor);
+        fprintf(fd, "Número de Abilitações: %d\n", x.num_ablt);
+
         cout << "Código do Professor: " << x.cod_professor << endl;
         cout << "Número de Abilitações: " << x.num_ablt << endl;
-        for(auto y : x.preferencias) cout << "Preferência: " << y << endl;
+
+        for(auto y : x.preferencias) {
+            cout << "Preferência: " << y << endl;
+            fprintf(fd, "Preferência: %s\n", y);
+        }
     }
 
     for(auto x: grafo.esc){
         cout << "Código da Escola: " << x.cod_escola << endl;
+
+        fprintf(fd, "Código da Escola: %s\n", x.cod_escola);
+
         for(auto y : x.vagas) {
+            fprintf(fd, "Vaga para: %d\n", y.habilitacao);
+            fprintf(fd, "A vaga está: %d\n", y.ocupada);
+            fprintf(fd, "O professor responsável é: %d\n", y.professor.cod_professor);
+
             cout << "Vaga para: " << y.habilitacao << endl;
             cout << "A vaga está: " << y.ocupada ? "Ocupada" : "Livre" << endl;
             cout << "O professor responsável é: " << y.professor.cod_professor << endl;
         }
     }
 
+    fclose(fd);
 }
 
 void AlimentaGrafo(string value, int flag, Grafo* grf){
