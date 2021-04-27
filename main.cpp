@@ -11,11 +11,15 @@ struct Professor{
     string cod_professor;
     int num_ablt;
     vector<string> preferencias;
+
+    string escola_ocupada;
 };
 
 struct Escola{
     string cod_escola;
     vector<int> vagas;
+
+    vector<bool> vaga_ocupada;
 };
 
 struct Grafo{
@@ -58,7 +62,10 @@ void AlimentaGrafo(string value, int flag, Grafo* grf){
 
         while(pieces != NULL){
             if(contador == 0) esc.cod_escola = pieces;
-            else esc.vagas.push_back(stoi(pieces));
+            else {
+                esc.vagas.push_back(stoi(pieces));
+                esc.vaga_ocupada.push_back(false);
+            }
             pieces = strtok(NULL, " ");
 
             contador++;
@@ -88,6 +95,8 @@ void AlimentaGrafo(string value, int flag, Grafo* grf){
 
             contador++;
         }
+
+        prof.escola_ocupada = "";
         
         // Insere o professor no grafo
         grf->prof.push_back(prof); 
