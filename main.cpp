@@ -17,9 +17,13 @@ struct Professor{
 
 struct Escola{
     string cod_escola;
-    vector<int> vagas;
+    vector<Vagas> vagas;
+};
 
-    vector<bool> vaga_ocupada;
+struct Vagas{
+    int habilitacao;
+    bool ocupada;
+    Professor professor;
 };
 
 struct Grafo{
@@ -37,7 +41,11 @@ void ImprimeGrafo(Grafo grafo){
 
     for(auto x: grafo.esc){
         cout << "Código da Escola: " << x.cod_escola << endl;
-        for(auto y: x.vagas) cout << "Vaga para: " << y << endl;
+        for(auto y : x.vagas) {
+            cout << "Vaga para: " << y.habilitacao << endl;
+            cout << "A vaga está: " << y.ocupada ? "Ocupada" : "Livre" << endl;
+            cout << "O professor responsável é: " << y.professor.cod_professor << endl;
+        }
     }
 
 }
@@ -54,17 +62,21 @@ void AlimentaGrafo(string value, int flag, Grafo* grf){
         value.erase(remove(value.begin(), value.end(), '('), value.end());
         value.erase(remove(value.begin(), value.end(), ')'), value.end());
 
-        Escola esc;
+        Escola escola;
         int contador = 0;
 
         char* converted_value = const_cast<char*>(value.c_str());
         char* pieces = strtok(converted_value, " ");
 
         while(pieces != NULL){
-            if(contador == 0) esc.cod_escola = pieces;
-            else {
-                esc.vagas.push_back(stoi(pieces));
-                esc.vaga_ocupada.push_back(false);
+            if(contador == 0) escola.cod_escola = pieces;
+            else { 
+                Vagas vaga = new Vagas();
+                vaga.habilitacao = stoi(pieces);
+                vaga.ocupada = false;
+                vaga.professor = NULL;
+
+                escola.vagas.pushback(vaga);
             }
             pieces = strtok(NULL, " ");
 
@@ -72,7 +84,7 @@ void AlimentaGrafo(string value, int flag, Grafo* grf){
         }
         
         // Insere a escola no grafo
-        grf->esc.push_back(esc); 
+        grf->escola.push_back(escola); 
         
     } else {
         // Remove caracteres
@@ -120,17 +132,6 @@ int main(){
         else AlimentaGrafo(input_file, flag, &grafo);
     }
     file.close();
-
-    for(auto x: grafo.prof){
-        cout << "Código do Professor: " << x.cod_professor << endl;
-        cout << "Número de Abilitações: " << x.num_ablt << endl;
-        for(auto y : x.preferencias) cout << "Preferência: " << y << endl;
-    }
-
-    for(auto x: grafo.esc){
-        cout << "Código da Escola: " << x.cod_escola << endl;
-        for(auto y: x.vagas) cout << "Vaga para: " << y << endl;
-    }
 
     return 0;
 }
