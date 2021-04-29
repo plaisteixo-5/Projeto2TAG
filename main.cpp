@@ -52,16 +52,6 @@ struct find_professor : unary_function<Professor, bool> {
 
 void ImprimeGrafo(Grafo grafo){
 
-    for(auto x: grafo.professores){
-
-        cout << "Código do Professor: " << x.cod_professor << endl;
-        cout << "Número de Abilitações: " << x.num_ablt << endl;
-
-        for(auto y : x.escola_pref) {
-            cout << "Preferência: " << y << endl;
-        }
-    }
-
     for(auto x: grafo.escolas){
         cout << "Código da Escola: " << x.cod_escola << endl;
 
@@ -69,8 +59,9 @@ void ImprimeGrafo(Grafo grafo){
             string aux = y.ocupada ? "Ocupada" : "Livre";
 
             cout << "Vaga para: " << y.ablt << endl;
-            cout << "A vaga está: " << aux << endl;
-            cout << "O professor responsável é: " << y.codigo_professor << endl;
+            cout << "A vaga esta: " << aux << endl;
+            cout << "O professor responsavel eh: " << y.codigo_professor << endl;
+            cout << "Sua abilitacao eh: " << y.ablt_professor << endl;
         }
     }
 
@@ -155,7 +146,7 @@ void ContaVagas(Grafo grafo){
     cout << contador << endl;
 }
 
-void ImprimeDisponível(Grafo grafo){
+void ImprimeDisponivel(Grafo grafo){
     int cont = 0;
     for(auto professor : grafo.professores){
         if(professor.escola_ocupada.empty()) {
@@ -170,7 +161,7 @@ void ImprimeDisponível(Grafo grafo){
         for(auto vaga : escola.vagas){
             if(!vaga.ocupada) {
                 cont++;
-                cout << "A escola " << escola.cod_escola << " tem uma das vagas livres" << endl;
+                cout << "A escola " << escola.cod_escola << " tem a vaga de valor " << vaga.ablt << " livre" << endl;
             }
         }
     }
@@ -179,6 +170,10 @@ void ImprimeDisponível(Grafo grafo){
 
 bool compareByLength(const Professor &a, const Professor &b){
     return a.num_ablt > b.num_ablt;
+}
+
+bool compareBySchool(const Escola &a, const Escola &b){
+    return a.vagas[0].ablt > b.vagas[0].ablt;
 }
 
 void RealocaProfessor(string codigo_professor, Grafo* grafo){
@@ -207,6 +202,32 @@ void RealocaProfessor(string codigo_professor, Grafo* grafo){
     }
 }
 
+bool AlocaAbltIgual(Escola* escola, Professor* professor, bool igual){
+    for(auto vaga : escola->vagas){
+        if(igual){
+            if(vaga.ablt == professor->num_ablt){
+                vaga.codigo_professor = professor->cod_professor;
+                vaga.ablt_professor = professor->num_ablt;
+                vaga.ocupada = true;
+                professor->escola_ocupada = escola->cod_escola;
+
+                return true;
+            }
+        } else {
+            if(vaga.ablt <= professor->num_ablt){
+                vaga.codigo_professor = professor->cod_professor;
+                vaga.ablt_professor = professor->num_ablt;
+                vaga.ocupada = true;
+                professor->escola_ocupada = escola->cod_escola;
+
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 void Emparelha(Grafo* grafo){
     for(auto professor = grafo->professores.begin() ; professor != grafo->professores.end() ; professor++ ){
         bool flag = true;
@@ -215,9 +236,10 @@ void Emparelha(Grafo* grafo){
             for(auto escola_preferencia = professor->escola_pref.begin(); escola_preferencia != professor->escola_pref.end() && flag ; escola_preferencia++){
                 auto vagas_escola = find_if(grafo->escolas.begin(), grafo->escolas.end(), find_vagas(*escola_preferencia));
 
+                // flag = !AlocaAbltIgual(vagas_escola, *professor);
                 for(auto vaga_escola = vagas_escola->vagas.begin() ;  vaga_escola != vagas_escola->vagas.end() ; vaga_escola++){
                     if(vaga_escola->ocupada){
-                        if(vaga_escola->ablt_professor < professor->num_ablt && !vaga_escola->estavel){
+                        if(vaga_escola->ablt_professor < professor->num_ablt){
 
                             string aux_codigo_professor = vaga_escola->codigo_professor;
                             vaga_escola->codigo_professor = professor->cod_professor;
@@ -229,7 +251,6 @@ void Emparelha(Grafo* grafo){
                             break;
                         }
                     } else if(vaga_escola->ablt <= professor->num_ablt && !vaga_escola->ocupada){
-                        if(vaga_escola->ablt == professor->num_ablt) vaga_escola->estavel = true;
                         vaga_escola->codigo_professor = professor->cod_professor;
                         vaga_escola->ablt_professor = professor->num_ablt;
                         vaga_escola->ocupada = true;
@@ -262,13 +283,15 @@ int main(){
     }
     file.close();
 
-    Emparelha(&grafo);
-    Emparelha(&grafo);
+    sort(grafo.escolas.begin(), grafo.escolas.end(), compareBySchool);
 
+
+    Emparelha(&grafo);
 
     // ImprimeGrafo(grafo);
-    // ImprimeDisponível(grafo);
+    ImprimeGrafo(grafo);
     ContaVagas(grafo);
+    ImprimeDisponivel(grafo);
 
     return 0;
 }
