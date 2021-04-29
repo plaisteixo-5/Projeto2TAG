@@ -18,6 +18,7 @@ struct Professor{
 struct Vagas{
     int ablt;
     bool ocupada;
+    bool estavel;
 
     string codigo_professor;
     int ablt_professor;
@@ -51,33 +52,21 @@ struct find_professor : unary_function<Professor, bool> {
 
 void ImprimeGrafo(Grafo grafo){
 
-    // FILE* fd;
-    // char file[] = "visualizacao_saida.txt";
-    // fd = fopen(file, "w");
-
     for(auto x: grafo.professores){
-        // fprintf(fd, "Código do Professor: %s\n", x.cod_professor);
-        // fprintf(fd, "Número de Abilitações: %d\n", x.num_ablt);
 
         cout << "Código do Professor: " << x.cod_professor << endl;
         cout << "Número de Abilitações: " << x.num_ablt << endl;
 
         for(auto y : x.escola_pref) {
             cout << "Preferência: " << y << endl;
-            // fprintf(fd, "Preferência: %s\n", y);
         }
     }
 
     for(auto x: grafo.escolas){
         cout << "Código da Escola: " << x.cod_escola << endl;
 
-        // fprintf(fd, "Código da Escola: %s\n", x.cod_escola);
-
         for(auto y : x.vagas) {
             string aux = y.ocupada ? "Ocupada" : "Livre";
-            // fprintf(fd, "Vaga para: %d\n", y.ablt);
-            // fprintf(fd, "A vaga está: %d\n", aux);
-            // fprintf(fd, "O professor responsável é: %d\n", y.professor.cod_professor);
 
             cout << "Vaga para: " << y.ablt << endl;
             cout << "A vaga está: " << aux << endl;
@@ -85,7 +74,6 @@ void ImprimeGrafo(Grafo grafo){
         }
     }
 
-    // fclose(fd);
 }
 
 void AlimentaGrafo(string value, int flag, Grafo* grf){
@@ -114,6 +102,7 @@ void AlimentaGrafo(string value, int flag, Grafo* grf){
                 vaga.ocupada = false;
                 vaga.ablt_professor = 0;
                 vaga.codigo_professor = "";
+                vaga.estavel = false;
 
                 escola.vagas.push_back(vaga);
             }
@@ -166,32 +155,53 @@ void ContaVagas(Grafo grafo){
     cout << contador << endl;
 }
 
+void ImprimeDisponível(Grafo grafo){
+    int cont = 0;
+    for(auto professor : grafo.professores){
+        if(professor.escola_ocupada.empty()) {
+            cont ++;
+            cout << "O professor " << professor.cod_professor << " não está alocado" << endl;
+        }
+    }
+    cout << "O total de professores livres é " << cont << endl;
+    cont = 0;
+
+    for(auto escola : grafo.escolas){
+        for(auto vaga : escola.vagas){
+            if(!vaga.ocupada) {
+                cont++;
+                cout << "A escola " << escola.cod_escola << " tem uma das vagas livres" << endl;
+            }
+        }
+    }
+    cout << "O total de vagas livres é " << cont << endl;
+}
+
+bool compareByLength(const Professor &a, const Professor &b){
+    return a.num_ablt > b.num_ablt;
+}
+
 void RealocaProfessor(string codigo_professor, Grafo* grafo){
     auto professor = find_if(grafo->professores.begin(), grafo->professores.end(), find_professor(codigo_professor));
+    bool flag = true;
 
-    for(auto escola_preferencia = professor->escola_pref.begin(); escola_preferencia != professor->escola_pref.end() ; escola_preferencia++){
-        // cout << "Tá no for das escolas do professor" << endl;
+    professor->escola_ocupada = "";
+
+
+    for(auto escola_preferencia = professor->escola_pref.begin(); escola_preferencia != professor->escola_pref.end() && flag; escola_preferencia++){
         auto vagas_escola = find_if(grafo->escolas.begin(), grafo->escolas.end(), find_vagas(*escola_preferencia));
 
         for(auto vaga_escola = vagas_escola->vagas.begin() ;  vaga_escola != vagas_escola->vagas.end() ; vaga_escola++){
-            // cout << "Tá no for das vagas da escola" << endl;
-            if(vaga_escola->ocupada){
-                if(vaga_escola->ablt_professor < professor->num_ablt){
-                    cout << "Trocou" << endl;
-                    
-                    string aux_codigo_professor = vaga_escola->codigo_professor;
-                    vaga_escola->codigo_professor = professor->cod_professor;
-                    vaga_escola->ablt_professor = professor->num_ablt;
-                    professor->escola_ocupada = vagas_escola->cod_escola;
+            string aux = vaga_escola->ocupada ? "Ocupada" : "Livre";
 
-                    RealocaProfessor(aux_codigo_professor, grafo);
-                }
-            } else if(vaga_escola->ablt <= professor->num_ablt && !vaga_escola->ocupada){
-
+            if(vaga_escola->ablt <= professor->num_ablt && !vaga_escola->ocupada){
                 vaga_escola->codigo_professor = professor->cod_professor;
                 vaga_escola->ablt_professor = professor->num_ablt;
                 vaga_escola->ocupada = true;
                 professor->escola_ocupada = vagas_escola->cod_escola;
+                flag = false;
+
+                break;
             }
         }
     }
@@ -199,43 +209,34 @@ void RealocaProfessor(string codigo_professor, Grafo* grafo){
 
 void Emparelha(Grafo* grafo){
     for(auto professor = grafo->professores.begin() ; professor != grafo->professores.end() ; professor++ ){
-        // cout << professor.cod_professor << endl;
         bool flag = true;
 
         if(professor->escola_ocupada.empty()) {
             for(auto escola_preferencia = professor->escola_pref.begin(); escola_preferencia != professor->escola_pref.end() && flag ; escola_preferencia++){
-                // cout << "Tá no for das escolas do professor" << endl;
                 auto vagas_escola = find_if(grafo->escolas.begin(), grafo->escolas.end(), find_vagas(*escola_preferencia));
 
                 for(auto vaga_escola = vagas_escola->vagas.begin() ;  vaga_escola != vagas_escola->vagas.end() ; vaga_escola++){
-                    // cout << "Tá no for das vagas da escola" << endl;
                     if(vaga_escola->ocupada){
-                        if(vaga_escola->ablt_professor < professor->num_ablt){
-                            cout << "Trocou 2" << endl;
-                                    cout << "---------- Atualização ----------" << endl;
+                        if(vaga_escola->ablt_professor < professor->num_ablt && !vaga_escola->estavel){
 
-                            cout << "Professor que vai subsitituir: " << professor->cod_professor << endl;
-                            cout << "Professor que vai ser substituido: " << vaga_escola->codigo_professor << endl;
-                            cout << "Escola: " << vagas_escola->cod_escola << endl;
-                            
                             string aux_codigo_professor = vaga_escola->codigo_professor;
                             vaga_escola->codigo_professor = professor->cod_professor;
                             vaga_escola->ablt_professor = professor->num_ablt;
                             professor->escola_ocupada = vagas_escola->cod_escola;
 
-                            cout << "Professor: " << vaga_escola->codigo_professor << endl;
-                            cout << "Abilitação: " << vaga_escola->ablt_professor << endl;
-
                             RealocaProfessor(aux_codigo_professor, grafo);
+                            flag = false;
+                            break;
                         }
                     } else if(vaga_escola->ablt <= professor->num_ablt && !vaga_escola->ocupada){
-
+                        if(vaga_escola->ablt == professor->num_ablt) vaga_escola->estavel = true;
                         vaga_escola->codigo_professor = professor->cod_professor;
                         vaga_escola->ablt_professor = professor->num_ablt;
                         vaga_escola->ocupada = true;
                         professor->escola_ocupada = vagas_escola->cod_escola;
 
                         flag = false;
+                        break;
                     }
                 }
             }
@@ -262,9 +263,11 @@ int main(){
     file.close();
 
     Emparelha(&grafo);
+    Emparelha(&grafo);
 
 
-    ImprimeGrafo(grafo);
+    // ImprimeGrafo(grafo);
+    // ImprimeDisponível(grafo);
     ContaVagas(grafo);
 
     return 0;
