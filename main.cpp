@@ -4,16 +4,9 @@
 #include "algorithm"
 #include "vector"
 #include "cstring"
+#include "Functions.cpp"
 
 using namespace std;
-
-struct Professor{
-    string cod_professor;
-    int habilitacao;
-    vector<string> escola_pref;
-
-    string escola_ocupada;
-};
 
 struct Vagas{
     int habilitacao;
@@ -225,7 +218,7 @@ void RealocaProfessor(string codigo_professor, Grafo& grafo){
     }
 }
 
-void Emparelha(Grafo& grafo){
+void Emparelha(Grafo& grafo, bool estavel_max){
     for(auto professor = grafo.professores.begin() ; professor != grafo.professores.end() ; professor++ ){
         bool flag = true;
 
@@ -234,23 +227,19 @@ void Emparelha(Grafo& grafo){
                 auto vagas_escola = find_if(grafo.escolas.begin(), grafo.escolas.end(), find_vagas(*escola_preferencia));
 
                 for(auto vaga_escola = vagas_escola->vagas.begin() ;  vaga_escola != vagas_escola->vagas.end() ; vaga_escola++){
-                    if(vaga_escola->ocupada){
-                        if(vaga_escola->habilitacao_professor < professor->habilitacao && !vaga_escola->estavel){
+                    if(vaga_escola->habilitacao == professor->habilitacao && !vaga_escola->ocupada){
+                        if(vaga_escola->habilitacao == professor->habilitacao) vaga_escola->estavel = true;
+                        vaga_escola->codigo_professor = professor->cod_professor;
+                        vaga_escola->habilitacao_professor = professor->habilitacao;
+                        vaga_escola->ocupada = true;
+                        professor->escola_ocupada = vagas_escola->cod_escola;
 
-                            string aux_codigo_professor = vaga_escola->codigo_professor;
-                            vaga_escola->codigo_professor = professor->cod_professor;
-                            vaga_escola->habilitacao_professor = professor->habilitacao;
-                            professor->escola_ocupada = vagas_escola->cod_escola;
-
-                            RealocaProfessor(aux_codigo_professor, grafo);
-                            cout << "Substituiu " << aux_codigo_professor << " por " << professor->cod_professor << endl;
-
-                            auto aux = find_if(grafo.professores.begin(), grafo.professores.end(), find_professor(aux_codigo_professor));
-                            cout << "Ocupou a escola: " << aux->escola_ocupada << endl;
-                            flag = false;
-                            break;
-                        }
-                    } else if(vaga_escola->habilitacao <= professor->habilitacao && !vaga_escola->ocupada){
+                        flag = false;
+                        break;
+                    }
+                }
+                for(auto vaga_escola = vagas_escola->vagas.begin() ;  vaga_escola != vagas_escola->vagas.end() ; vaga_escola++){
+                    if(vaga_escola->habilitacao <= professor->habilitacao && !vaga_escola->ocupada){
                         if(vaga_escola->habilitacao == professor->habilitacao) vaga_escola->estavel = true;
                         vaga_escola->codigo_professor = professor->cod_professor;
                         vaga_escola->habilitacao_professor = professor->habilitacao;
@@ -264,8 +253,8 @@ void Emparelha(Grafo& grafo){
             }
         }
     }
-
-    for(auto escola = grafo.escolas.begin() ; escola != grafo.escolas.end() ; escola++){
+if(estavel_max){
+for(auto escola = grafo.escolas.begin() ; escola != grafo.escolas.end() ; escola++){
         bool flag = true;
         for(auto vaga = escola->vagas.begin() ; vaga != escola->vagas.end() ; vaga++){
             if(!vaga->ocupada){
@@ -284,6 +273,8 @@ void Emparelha(Grafo& grafo){
             }
         }
     }
+}
+    
     // for(auto escola = grafo.escolas.begin() ; escola != grafo.escolas.end() ; escola++){
     //     bool flag = true;
     //     for(auto vaga = escola->vagas.begin() ; vaga != escola->vagas.end() ; vaga++){
@@ -324,14 +315,17 @@ int main(){
     }
     file.close();
 
-    sort(grafo.escolas.begin(), grafo.escolas.end(), compareBySchool);
+    // sort(grafo.escolas.begin(), grafo.escolas.end(), compareBySchool);
 
 
-    Emparelha(grafo);
+    Emparelha(grafo, false);
 
-    // ImprimeGrafo(grafo);
-    // ImprimeGrafo(grafo);
     ImprimeDisponivel(grafo);
+
+    //Emparelha(grafo, true);
+    //ImprimeDisponivel(grafo);
+    // ImprimeGrafo(grafo);
+    // ImprimeGrafo(grafo);
     // ContaVagas(grafo);
     // ImprimeProfessor(grafo);
 
